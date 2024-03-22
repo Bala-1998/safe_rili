@@ -79,20 +79,19 @@ class ValueIteration:
         else:
             next_state = (x,y)  # Stay in the current position if action is not recognized
 
-        self.grid_world.human_pos = self.grid_world.human_move_towards_goal(self.grid_world)
         # Return the current state if moving to next_state would collide with the human or is invalid
         if not self.is_valid_state(next_state) or next_state == self.grid_world.human_pos:
             return state
         return next_state
 
-    def reward(self, current_state, next_state):
+    def reward(self, human_pos_temp, next_state):
         if next_state == self.grid_world.robot_goal:
             return 100  # Goal reward
         if next_state == self.grid_world.human_pos:
             return -10000  # Collision penalty
         # Safe distance check
-        if abs(next_state[0] - self.grid_world.human_pos[0]) <= self.grid_world.robot_radius and \
-           abs(next_state[1] - self.grid_world.human_pos[1]) <= self.grid_world.robot_radius:
+        if abs(next_state[0] - human_pos_temp[0]) <= self.grid_world.robot_radius and \
+           abs(next_state[1] - human_pos_temp[1]) <= self.grid_world.robot_radius:
             return -10
         return -1  # Movement cost
 
@@ -114,7 +113,8 @@ class ValueIteration:
                     action_values = []
                     for action in self.actions:
                         next_state = self.get_next_state(state, action)
-                        reward = self.reward(state, next_state)
+                        human_pos_temp = self.grid_world.human_move_towards_goal(self.grid_world)
+                        reward = self.reward(human_pos_temp, next_state)
                         action_values.append(reward + self.discount_factor * self.value_map[next_state])
                     max_value = max(action_values)
                     self.value_map[state] = max_value
